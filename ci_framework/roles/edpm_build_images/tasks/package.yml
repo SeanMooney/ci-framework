@@ -1,0 +1,20 @@
+---
+- name: Package edpm-hardened-uefi image inside container image
+  args:
+    chdir: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"
+  ansible.builtin.shell:
+    cmd: |
+      buildah bud -f ./Containerfile.image -t edpm-hardened-uefi:latest > {{ cifmw_edpm_build_images_artifacts }}/edpm_images/edpm_hardened_uefi_container_package.log
+  when:
+    - (cifmw_edpm_build_images_hardened_uefi | bool) or (cifmw_edpm_build_images_all | bool)
+    - cifmw_edpm_build_images_hardened_uefi_package | bool
+
+- name: Package ironic-python-agent image inside container image
+  args:
+    chdir: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"
+  ansible.builtin.shell:
+    cmd: |
+      buildah bud -f ./Containerfile.ramdisk -t ironic-python-agent:latest > {{ cifmw_edpm_build_images_artifacts }}/edpm_images/ironic_python_agent_container_package.log
+  when:
+    - (cifmw_edpm_build_images_ironic_python_agent | bool) or (cifmw_edpm_build_images_all | bool)
+    - cifmw_edpm_build_images_ironic_python_agent_package | bool

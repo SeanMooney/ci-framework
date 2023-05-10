@@ -1,0 +1,43 @@
+---
+- name: Ensure directories are present
+  ansible.builtin.file:
+    path: "{{ cifmw_edpm_build_images_basedir }}/{{ item }}"
+    state: directory
+  loop:
+    - tmp
+    - artifacts/edpm_images
+
+- name: Ensure edpm-image-builder repository exist
+  register: eib_stats
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/edpm-image-builder"
+
+- name: Copy edpm-image-builder repository
+  ansible.builtin.copy:
+    src: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/"
+    dest: "{{ cifmw_edpm_build_images_basedir }}/tmp/"
+  when: eib_stats.stat.exists | bool
+
+- name: Get edpm-image-builder repository
+  ansible.builtin.git:
+    accept_hostkey: true
+    dest: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"
+    repo: "{{ cifmw_edpm_build_images_src }}"
+  when: not eib_stats.stat.exists
+
+- name: Install required packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ cifmw_build_host_packages }}"
+    state: latest
+
+- name: Initialize python venv and install requirements
+  ansible.builtin.pip:
+    virtualenv: "{{ cifmw_edpm_build_images_basedir }}/venv"
+    requirements: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder/requirements.txt"
+    virtualenv_command: "python3 -m venv"
+
+- name: Create diskimage-builder utililty
+  ansible.builtin.command:
+    cmd: "{{ cifmw_edpm_build_images_basedir }}/venv/bin/python setup.py install"
+    chdir: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"

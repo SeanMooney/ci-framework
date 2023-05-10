@@ -1,0 +1,7 @@
+---
+ansible_user_dir: "{{ lookup('env', 'HOME') }}"
+cifmw_edpm_build_images_all: false
+cifmw_edpm_build_images_hardened_uefi: true
+cifmw_edpm_build_images_ironic_python_agent: true
+cifmw_edpm_build_images_hardened_uefi_package: true
+cifmw_edpm_build_images_ironic_python_agent_package: false

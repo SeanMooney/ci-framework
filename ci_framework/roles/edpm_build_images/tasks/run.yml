@@ -1,0 +1,25 @@
+---
+- name: Set DIB elements path
+  ansible.builtin.set_fact:
+    cifmw_elements: "{{ cifmw_edpm_build_images_elements | join(':') }}"
+    cacheable: true
+
+- name: Build images
+  when:
+    - (cifmw_edpm_build_images_all | bool) or (cifmw_edpm_build_images_hardened_uefi | bool) or (cifmw_edpm_build_images_ironic_python_agent | bool)
+  block:
+    - name: Build EDPM hardened uefi image
+      ansible.builtin.shell: |
+        export ELEMENTS_PATH={{ cifmw_elements }}
+        {{ cifmw_edpm_build_images_basedir }}/venv/bin/diskimage-builder {{ cifmw_edpm_build_images_config_dir }}/edpm-hardened-uefi-centos-9-stream.yaml > {{ cifmw_edpm_build_images_artifacts }}/edpm_images/edpm_hardened_uefi_image_build.log
+      args:
+        chdir: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"
+      when: (cifmw_edpm_build_images_hardened_uefi | bool) or (cifmw_edpm_build_images_all | bool)
+
+    - name: Build ironic-python-agent image
+      ansible.builtin.shell: |
+        export ELEMENTS_PATH={{ cifmw_elements }}
+        {{ cifmw_edpm_build_images_basedir }}/venv/bin/diskimage-builder {{ cifmw_edpm_build_images_config_dir }}/ironic-python-agent-centos-9-stream.yaml > {{ cifmw_edpm_build_images_artifacts }}/edpm_images/ironic_python_agent_image_build.log
+      args:
+        chdir: "{{ cifmw_edpm_build_images_basedir }}/tmp/edpm-image-builder"
+      when: (cifmw_edpm_build_images_ironic_python_agent | bool) or (cifmw_edpm_build_images_all | bool)
