@@ -77,6 +77,15 @@
         cmd: >
           oc wait InstallPlan {{ cifmw_edpm_prepare_wait_installplan_out.stdout }}
           --namespace={{ cifmw_install_yamls_defaults['NAMESPACE'] }} --for=jsonpath='{.status.phase}'=Complete --timeout=20m
+
+    - name: Make sure all Openstack operators are deployed
+      ansible.builtin.shell: |
+        set -o pipefail && oc get csv -l operators.coreos.com/openstack-operator.openstack --no-headers=true | grep -i "succeeded"
+      register: operator_status
+      until: operator_status.rc == 0
+      changed_when: false
+      retries: "{{ cifmw_edpm_prepare_wait_subscription_retries }}"
+      delay: 30
   when: not cifmw_edpm_prepare_dry_run
 
 - name: Install OpenStack service
