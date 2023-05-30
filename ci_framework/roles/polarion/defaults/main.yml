@@ -1,0 +1,35 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+
+# All variables intended for modification should be placed in this file.
+# All variables within this role should have a prefix of "cifmw_polarion"
+
+
+cifmw_polarion_jump_repo_url: ""
+
+cifmw_polarion_storage_fqdn: ""
+cifmw_polarion_storage_ssh_user: ""
+cifmw_polarion_storage_result_path: ""
+
+cifmw_polarion_test_id: ""
+cifmw_polarion_update_testcases: ""
+cifmw_polarion_update_existing_test_cases: ""
+cifmw_polarion_zuul_build: ""
+cifmw_polarion_osp_puddle_id: ""
+cifmw_polarion_osp_release: ""
+cifmw_polarion_remove_old_test_cases_itr: ""
+

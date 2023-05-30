@@ -1,0 +1,82 @@
+- name: Clone Jump repository
+  ansible.builtin.git:
+    repo: "{{ cifmw_polarion_jump_repo_url }}"
+    dest: "{{ cifmw_polarion_jump_repo_dir }}"
+    version: "master"
+    force: true
+
+- name: Create virtualenv
+  ansible.builtin.pip:
+    name: pip
+    virtualenv: "{{ cifmw_polarion_jump_repo_dir }}/jump-venv"
+    virtualenv_command: "/usr/bin/python3 -m venv"
+    state: latest
+    extra_args: --upgrade
+  when:
+    - cifmw_polarion_jump_repo_dir is defined and cifmw_polarion_jump_repo_dir != ""
+
+# Will be removed before merge
+- name: Make sure to use polarion staging
+  ansible.builtin.replace:
+    path: "{{ cifmw_polarion_jump_repo_dir }}/{{ item }}"
+    regexp: "{{ polarion_fqdn }}"
+    replace: "{{ polarion_stage_fqdn }}"
+  loop:
+    - "helpers.py"
+    - ".pylero"
+
+- name: Run prepare_pylero.sh
+  ansible.builtin.shell: >
+    source jump-venv/bin/activate
+    ./prepare_pylero.sh
+  args:
+    chdir: "{{ cifmw_polarion_jump_repo_dir }}"
+    executable: /bin/bash
+
+# Needs to be revisited to understand how xml files will be fetched
+- name: Copy test results using rsync
+  ansible.builtin.shell: >
+    rsync -zarv --stats --prune-empty-dirs --include "*/" --include="*.xml" --exclude="*" \ 
+      {{ cifmw_polarion_storage_ssh_user }}@{{ cifmw_polarion_storage_fqdn }}:{{ cifmw_polarion_storage_result_path }}/ \
+      {{ cifmw_polarion_jump_result_dir }}
+  register: rsync_output
+  failed_when: rsync_output.rc != 0
+
+- name: Find XML files in directory
+  ansible.builtin.find:
+    paths: "{{ cifmw_polarion_jump_result_dir }}"
+    patterns: "*.xml"
+    recurse: yes
+  register: xml_files
+
+- name: Validate XML files with xmllint
+  ansible.builtin.command: "xmllint --noout {{ item.path }}"
+  loop: "{{ xml_files.files }}"
+  register: xmllint_output
+  changed_when: false
+  failed_when: xmllint_output.rc != 0
+
+- name: Set XML files in a fact
+  set_fact:
+    found_xml_files: "{{ xml_files.files | map(attribute='path') | join(',') }}"
+
+- name: Update Test Runs
+  shell: >
+    python jump.py \
+      --testrun-id="{{ cifmw_polarion_test_id }}" \
+      --xml-file="{{ found_xml_files }}" \
+      --update_testcases="{{ cifmw_polarion_update_testcases | default(false) }}"
+#       --dfg Network
+#       --jenkins_build_url="{{ cifmw_polarion_zuul_build }}" \
+#       --puddle-id="{{ cifmw_polarion_osp_puddle_id }}" \
+#       --custom-fields build="{{ cifmw_polarion_osp_release }}" \
+#       --remove-old-tests="{{ cifmw_polarion_remove_old_test_cases_itr }}" \
+#       --update-existing-test-cases="{{ cifmw_polarion_update_existing_test_cases }}"
+  register: jump_script
+  changed_when: false
+  args:
+    chdir: "{{ cifmw_polarion_jump_repo_dir }}"
+  when:
+    - cifmw_polarion_test_id is defined and cifmw_polarion_test_id != ""
+    - cifmw_polarion_update_testcases == "false" or cifmw_polarion_update_testcases == "true"
+    - xmllint_output | json_query("[?rc == '0']") | length == xmllint_output | length
