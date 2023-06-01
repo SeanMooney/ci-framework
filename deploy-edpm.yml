@@ -25,4 +25,5 @@
   ansible.builtin.import_playbook: ci_framework/playbooks/06-deploy-edpm.yml
 
 - name: Run log related tasks
-  ansible.builtin.import_playbook: ci_framework/playbooks/99-logs.yml
+  ansible.builtin.include: ci_framework/playbooks/99-logs.yml
+  when: not zuul_log_collection | default ('False') | bool
