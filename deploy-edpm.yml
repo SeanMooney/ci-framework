@@ -23,6 +23,3 @@
 
 - name: Import deploy edpm playbook
   ansible.builtin.import_playbook: ci_framework/playbooks/06-deploy-edpm.yml
-
-- name: Run log related tasks
-  ansible.builtin.import_playbook: ci_framework/playbooks/99-logs.yml

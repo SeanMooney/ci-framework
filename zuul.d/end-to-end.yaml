@@ -19,7 +19,9 @@
     run:
       - ci/playbooks/dump_zuul_vars.yml
       - ci/playbooks/e2e-run.yml
-    post-run: ci/playbooks/collect-logs.yml
+    post-run:
+      - ci/playbooks/e2e-collect-logs.yml
+      - ci/playbooks/collect-logs.yml
     required-projects:
       - github.com/openstack-k8s-operators/install_yamls
     timeout: 5400
@@ -42,7 +44,9 @@
     run:
       - ci/playbooks/dump_zuul_vars.yml
       - ci/playbooks/e2e-run.yml
-    post-run: ci/playbooks/collect-logs.yml
+    post-run:
+      - ci/playbooks/e2e-collect-logs.yml
+      - ci/playbooks/collect-logs.yml
     required-projects:
       - github.com/openstack-k8s-operators/install_yamls
     timeout: 5400
